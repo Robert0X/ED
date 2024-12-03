@@ -1,7 +1,9 @@
 public class Ordenamiento {
 
     public static void shellSort(int[] arr) {
+
         int n = arr.length;
+        // gap -> salto
         for (int gap = n / 2; gap > 0; gap /= 2) {
             for (int i = gap; i < n; i++) {
                 int temp = arr[i];
@@ -28,7 +30,7 @@ public class Ordenamiento {
         for (int j = low; j < high; j++) {
             if (arr[j] < pivot) {
                 i++;
-                // Intercambiar
+                // Hace el intercambio
                 int temp = arr[i];
                 arr[i] = arr[j];
                 arr[j] = temp;
