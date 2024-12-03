@@ -1,6 +1,5 @@
 public class Ordenamiento {
 
-    // Shell Sort
     public static void shellSort(int[] arr) {
         int n = arr.length;
         for (int gap = n / 2; gap > 0; gap /= 2) {
@@ -15,7 +14,6 @@ public class Ordenamiento {
         }
     }
 
-    // Quick Sort
     public static void quickSort(int[] arr, int low, int high) {
         if (low < high) {
             int pi = particion(arr, low, high);
