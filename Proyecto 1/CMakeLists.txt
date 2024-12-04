@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.29)
+project(untitled1 C)
+
+set(CMAKE_C_STANDARD 11)
+
+add_executable(untitled1 narios.c
+        bin.c
+        binBal.c
+        arbolB.c
+        main.c)
