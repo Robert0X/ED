@@ -1,0 +1,14 @@
+Para compilar y ejecutar:
+
+[bash]
+
+gcc main.c lista_simple.c lista_doble.c lista_doble_circular.c -o Main
+
+./Main
+
+
+[Para ejecutar directamente en 1 paso]
+
+[bash]
+
+gcc main.c lista_simple.c lista_doble.c lista_doble_circular.c -o programa
