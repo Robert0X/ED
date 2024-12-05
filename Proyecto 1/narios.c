@@ -30,7 +30,7 @@ Nodo* buscarHijo(Nodo* nodo, char valor) {
 // Agregar un hijo a un nodo
 void agregarHijo(Nodo* padre, Nodo* hijo) {
     padre->numHijos++;
-    padre->hijos = (Nodo*)realloc(padre->hijos, padre->numHijos * sizeof(Nodo));
+    padre->hijos = (Nodo**)realloc(padre->hijos, padre->numHijos * sizeof(Nodo*));
     padre->hijos[padre->numHijos - 1] = hijo;
 }
 
@@ -49,15 +49,29 @@ void insertarPalabra(Nodo* raiz, const char* palabra) {
     }
 }
 
+// Función para buscar una palabra en el árbol
+int buscarPalabra(Nodo* raiz, const char* palabra) {
+    Nodo* actual = raiz;
+    for (int i = 0; palabra[i] != '\0'; i++) {
+        char letra = palabra[i];
+        Nodo* hijo = buscarHijo(actual, letra);
+        if (hijo == NULL) {
+            return 0;  // No se encontró la palabra
+        }
+        actual = hijo;
+    }
+    return 1;  // Se encontró la palabra
+}
+
 // Imprimir el árbol
 void imprimirArbol(Nodo* nodo, int nivel) {
     if (nodo == NULL) return;
 
     for (int i = 0; i < nivel; i++) {
-        printf("       ");
+        printf("    ");
     }
     if (nivel > 0) {
-        printf("|--- ");
+        printf("|-- ");
     }
     printf("%c\n", nodo->valor);
 
@@ -82,11 +96,12 @@ int main() {
     int opcion;
 
     do {
-        printf("\n--- Árbol N-ario para palabras ---\n");
+        printf("\n--- Arbol N-ario para palabras ---\n");
         printf("1. Insertar palabra\n");
-        printf("2. Mostrar árbol\n");
-        printf("3. Salir\n");
-        printf("Seleccione una opción: ");
+        printf("2. Mostrar arbol\n");
+        printf("3. Buscar palabra\n");
+        printf("4. Salir\n");
+        printf("Seleccione una opcion: ");
         scanf("%d", &opcion);
 
         switch (opcion) {
@@ -95,21 +110,32 @@ int main() {
                 printf("Ingrese una palabra: ");
                 scanf("%s", palabra);
                 insertarPalabra(raiz, palabra);
-                printf("Palabra '%s' insertada en el árbol.\n", palabra);
+                printf("\nPalabra '%s' insertada en el arbol.\n", palabra);
                 break;
             }
             case 2:
-                printf("\nRepresentación gráfica del árbol:\n");
+                printf("\nRepresentacion grafica del arbol:\n");
                 imprimirArbol(raiz, 0);
                 break;
-            case 3:
+            case 3: {
+                char palabra[100];
+                printf("Ingrese la palabra a buscar: ");
+                scanf("%s", palabra);
+                if (buscarPalabra(raiz, palabra)) {
+                    printf("La palabra '%s' se encontro en el arbol.\n", palabra);
+                } else {
+                    printf("La palabra '%s' no se encontro en el arbol.\n", palabra);
+                }
+                break;
+            }
+            case 4:
                 printf("Saliendo del programa...\n");
                 liberarArbol(raiz);
                 break;
             default:
-                printf("Opción inválida. Intente nuevamente.\n");
+                printf("Opcion invalida. Intente nuevamente.\n");
         }
-    } while (opcion != 3);
+    } while (opcion != 4);
 
     return 0;
 }

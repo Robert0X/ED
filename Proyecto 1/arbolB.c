@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 typedef struct NodoArbolB {
-    int n; // Numero de claves almacenadas en el nodo
+    int n; // Número de claves almacenadas en el nodo
     bool leaf; // Si el nodo es hoja
     int *key; // Claves del nodo
     struct NodoArbolB **child; // Referencias a los hijos
@@ -11,20 +11,20 @@ typedef struct NodoArbolB {
 
 typedef struct {
     NodoArbolB *root;
-    int t; // Grado minimo
+    int t; // Grado mínimo
 } ArbolB;
 
-// Funcion para crear un nodo
+// Crear un nodo
 NodoArbolB* crearNodo(int t, bool leaf) {
     NodoArbolB *nuevoNodo = (NodoArbolB *)malloc(sizeof(NodoArbolB));
     nuevoNodo->n = 0;
     nuevoNodo->leaf = leaf;
-    nuevoNodo->key = (int *)malloc(sizeof(int) * (2 * t - 1));
-    nuevoNodo->child = (NodoArbolB **)malloc(sizeof(NodoArbolB *) * (2 * t));
+    nuevoNodo->key = (int *)malloc(sizeof(int) * (2 * t + 1)); // Cambiado a 2 * t + 1
+    nuevoNodo->child = (NodoArbolB **)malloc(sizeof(NodoArbolB *) * (2 * t + 2)); // Cambiado a 2 * t + 2
     return nuevoNodo;
 }
 
-// Funcion para inicializar un Arbol B
+// Crear un árbol B
 ArbolB* crearArbolB(int t) {
     ArbolB *arbol = (ArbolB *)malloc(sizeof(ArbolB));
     arbol->t = t;
@@ -34,15 +34,15 @@ ArbolB* crearArbolB(int t) {
 
 // Imprimir un nodo
 void imprimirNodo(NodoArbolB *nodo) {
-    printf("[");
+    printf("[ ");
     for (int i = 0; i < nodo->n; i++) {
         printf("%d", nodo->key[i]);
-        if (i < nodo->n - 1) printf(" | ");
+        if (i < nodo->n - 1) printf(", ");
     }
-    printf("]");
+    printf(" ]");
 }
 
-// Imprimir el arbol por niveles
+// Mostrar árbol por niveles
 void mostrarArbol(NodoArbolB *root) {
     if (root == NULL) {
         printf("El arbol esta vacio.\n");
@@ -71,7 +71,7 @@ void mostrarArbol(NodoArbolB *root) {
                 }
             }
         }
-        printf("\n"); // Salto de linea al final del nivel
+        printf("\n");
     }
 
     free(cola);
@@ -80,19 +80,19 @@ void mostrarArbol(NodoArbolB *root) {
 // Dividir un nodo
 void dividirNodo(NodoArbolB *padre, int i, NodoArbolB *hijo, int t) {
     NodoArbolB *nuevoNodo = crearNodo(t, hijo->leaf);
-    nuevoNodo->n = t - 1;
+    nuevoNodo->n = t;
 
-    for (int j = 0; j < t - 1; j++) {
-        nuevoNodo->key[j] = hijo->key[j + t];
+    for (int j = 0; j < t; j++) {
+        nuevoNodo->key[j] = hijo->key[j + t + 1];
     }
 
     if (!hijo->leaf) {
-        for (int j = 0; j < t; j++) {
-            nuevoNodo->child[j] = hijo->child[j + t];
+        for (int j = 0; j < t + 1; j++) {
+            nuevoNodo->child[j] = hijo->child[j + t + 1];
         }
     }
 
-    hijo->n = t - 1;
+    hijo->n = t;
 
     for (int j = padre->n; j >= i + 1; j--) {
         padre->child[j + 1] = padre->child[j];
@@ -102,7 +102,7 @@ void dividirNodo(NodoArbolB *padre, int i, NodoArbolB *hijo, int t) {
     for (int j = padre->n; j >= i; j--) {
         padre->key[j + 1] = padre->key[j];
     }
-    padre->key[i] = hijo->key[t - 1];
+    padre->key[i] = hijo->key[t];
     padre->n++;
 }
 
@@ -123,7 +123,7 @@ void insertarNoLleno(NodoArbolB *nodo, int key, int t) {
         }
         i++;
 
-        if (nodo->child[i]->n == 2 * t - 1) {
+        if (nodo->child[i]->n == 2 * t + 1) {
             dividirNodo(nodo, i, nodo->child[i], t);
 
             if (key > nodo->key[i]) {
@@ -134,11 +134,11 @@ void insertarNoLleno(NodoArbolB *nodo, int key, int t) {
     }
 }
 
-// Insertar en el arbol B
+// Insertar en el árbol B
 void insertar(ArbolB *arbol, int key) {
     NodoArbolB *raiz = arbol->root;
 
-    if (raiz->n == 2 * arbol->t - 1) {
+    if (raiz->n == 2 * arbol->t + 1) {
         NodoArbolB *nuevoNodo = crearNodo(arbol->t, false);
         arbol->root = nuevoNodo;
         nuevoNodo->child[0] = raiz;
@@ -148,33 +148,174 @@ void insertar(ArbolB *arbol, int key) {
     } else {
         insertarNoLleno(raiz, key, arbol->t);
     }
+
+    printf("\nArbol despues de insertar %d:\n", key);
+    mostrarArbol(arbol->root);
 }
 
-// Buscar el valor maximo
-int buscarMaximo(NodoArbolB *nodo) {
-    while (!nodo->leaf) {
-        nodo = nodo->child[nodo->n];
+// Prestar una clave de un hermano
+void prestarClave(NodoArbolB *padre, int idx, int t) {
+    NodoArbolB *hijo = padre->child[idx];
+    NodoArbolB *hermano = padre->child[idx + 1];
+
+    if (hermano->n > t) {
+        // Prestar del hermano derecho
+        hijo->key[hijo->n] = padre->key[idx];
+        padre->key[idx] = hermano->key[0];
+
+        for (int i = 0; i < hermano->n - 1; i++) {
+            hermano->key[i] = hermano->key[i + 1];
+        }
+
+        if (!hermano->leaf) {
+            hijo->child[hijo->n + 1] = hermano->child[0];
+            for (int i = 0; i < hermano->n; i++) {
+                hermano->child[i] = hermano->child[i + 1];
+            }
+        }
+
+        hijo->n++;
+        hermano->n--;
+    } else {
+        // Prestar del hermano izquierdo
+        hijo->key[hijo->n] = padre->key[idx];
+        padre->key[idx] = hermano->key[hermano->n - 1];
+
+        for (int i = hermano->n - 1; i > 0; i--) {
+            hermano->key[i] = hermano->key[i - 1];
+        }
+
+        if (!hermano->leaf) {
+            hijo->child[hijo->n + 1] = hermano->child[hermano->n];
+            for (int i = hermano->n; i > 0; i--) {
+                hermano->child[i] = hermano->child[i - 1];
+            }
+        }
+
+        hijo->n++;
+        hermano->n--;
     }
-    return nodo->key[nodo->n - 1];
 }
 
-// Liberar memoria del nodo
-void liberarNodo(NodoArbolB *nodo) {
-    free(nodo->key);
-    free(nodo->child);
-    free(nodo);
-}
+// Fusionar dos nodos
+void fusionar(NodoArbolB *padre, int idx, int t) {
+    NodoArbolB *hijo = padre->child[idx];
+    NodoArbolB *hermano = padre->child[idx + 1];
 
-// Liberar memoria del arbol
-void liberarArbol(NodoArbolB *nodo) {
-    if (nodo == NULL) return;
+    // El primer hijo toma una clave del padre
+    hijo->key[hijo->n] = padre->key[idx];
+    for (int i = 0; i < hermano->n; i++) {
+        hijo->key[i + hijo->n + 1] = hermano->key[i];
+    }
 
-    if (!nodo->leaf) {
-        for (int i = 0; i <= nodo->n; i++) {
-            liberarArbol(nodo->child[i]);
+    if (!hijo->leaf) {
+        for (int i = 0; i <= hermano->n; i++) {
+            hijo->child[i + hijo->n + 1] = hermano->child[i];
         }
     }
-    liberarNodo(nodo);
+
+    // Mover las claves del padre hacia la izquierda
+    for (int i = idx + 1; i < padre->n; i++) {
+        padre->key[i - 1] = padre->key[i];
+    }
+
+    for (int i = idx + 2; i <= padre->n; i++) {
+        padre->child[i - 1] = padre->child[i];
+    }
+
+    padre->n--;
+    hijo->n += hermano->n + 1;
+
+    free(hermano);
+}
+
+// Balancear después de eliminar
+void balancear(NodoArbolB *padre, int idx, int t) {
+    if (padre->child[idx]->n < t) {
+        if (idx > 0 && padre->child[idx - 1]->n > t) {
+            // Prestar clave desde el hermano izquierdo
+            prestarClave(padre, idx - 1, t);
+        } else if (idx < padre->n && padre->child[idx + 1]->n > t) {
+            // Prestar clave desde el hermano derecho
+            prestarClave(padre, idx, t);
+        } else {
+            // Fusionar con el hermano
+            if (idx < padre->n) {
+                fusionar(padre, idx, t);
+            } else {
+                fusionar(padre, idx - 1, t);
+            }
+        }
+    }
+}
+
+// Eliminar una clave de un nodo
+void eliminarClave(NodoArbolB *nodo, int key, int t) {
+    int idx = 0;
+    while (idx < nodo->n && nodo->key[idx] < key) {
+        idx++;
+    }
+
+    if (idx < nodo->n && nodo->key[idx] == key) {
+        if (nodo->leaf) {
+            // Eliminar en hoja
+            for (int i = idx; i < nodo->n - 1; i++) {
+                nodo->key[i] = nodo->key[i + 1];
+            }
+            nodo->n--;
+        } else {
+            // Eliminar en nodo no hoja
+            NodoArbolB *hijo = nodo->child[idx];
+            if (hijo->n >= t) {
+                // Encontrar el predecesor
+                NodoArbolB *predecesor = hijo;
+                while (!predecesor->leaf) {
+                    predecesor = predecesor->child[predecesor->n];
+                }
+                nodo->key[idx] = predecesor->key[predecesor->n - 1];
+                eliminarClave(hijo, nodo->key[idx], t);
+            } else {
+                // Encontrar el sucesor
+                NodoArbolB *sucesor = nodo->child[idx + 1];
+                if (sucesor->n >= t) {
+                    nodo->key[idx] = sucesor->key[0];
+                    eliminarClave(sucesor, nodo->key[idx], t);
+                } else {
+                    fusionar(nodo, idx, t);
+                    eliminarClave(hijo, key, t);
+                }
+            }
+        }
+    } else if (!nodo->leaf) {
+        eliminarClave(nodo->child[idx], key, t);
+    }
+
+    if (nodo->n < t) {
+        balancear(nodo, idx, t);
+    }
+}
+
+// Eliminar en el árbol B
+void eliminar(ArbolB *arbol, int key) {
+    if (arbol->root == NULL) {
+        printf("El arbol está vacio.\n");
+        return;
+    }
+
+    eliminarClave(arbol->root, key, arbol->t);
+
+    if (arbol->root->n == 0) {
+        NodoArbolB *antiguaRaiz = arbol->root;
+        if (arbol->root->leaf) {
+            arbol->root = NULL;
+        } else {
+            arbol->root = arbol->root->child[0];
+        }
+        free(antiguaRaiz);
+    }
+
+    printf("\nArbol después de eliminar %d:\n", key);
+    mostrarArbol(arbol->root);
 }
 
 int main() {
@@ -186,27 +327,29 @@ int main() {
 
     int opcion, valor;
     do {
-        printf("\n1. Insertar\n2. Mostrar Arbol\n3. Buscar maximo\n4. Salir\n");
+        printf("\n1. Insertar\n2. Eliminar\n3. Mostrar Arbol\n4. Salir\n");
         printf("Opcion: ");
         scanf("%d", &opcion);
 
         switch (opcion) {
             case 1:
                 printf("Ingrese un valor a insertar: ");
-                scanf("%d", &valor);
-                insertar(arbol, valor);
-                break;
+            scanf("%d", &valor);
+            insertar(arbol, valor);
+            break;
             case 2:
-                mostrarArbol(arbol->root);
-                break;
+                printf("Ingrese un valor a eliminar: ");
+            scanf("%d", &valor);
+            eliminar(arbol, valor);
+            break;
             case 3:
-                printf("El valor maximo es: %d\n", buscarMaximo(arbol->root));
-                break;
+                mostrarArbol(arbol->root);
+            break;
             case 4:
                 printf("Saliendo...\n");
-                liberarArbol(arbol->root);
-                free(arbol);
-                break;
+
+            free(arbol);
+            break;
             default:
                 printf("Opcion invalida.\n");
         }
